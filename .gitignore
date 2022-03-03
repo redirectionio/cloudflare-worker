@@ -1,0 +1,4 @@
+target/
+wrangler.toml
+worker/generated
+Cargo.lock
