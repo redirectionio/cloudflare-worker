@@ -234,7 +234,7 @@ async function log(response, redirectionioRequest, action, libredirectionio, opt
                 method: 'POST',
                 body: logAsJson,
                 headers: {
-                    'User-Agent': 'cloudflare-worker/' + options.version,
+                    'User-Agent': 'redirectionio-cloudflare:' + options.version,
                     'x-redirectionio-instance-name': options.instance_name,
                 },
             }
