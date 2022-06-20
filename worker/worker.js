@@ -24,14 +24,14 @@ async function redirectionio_fetch(request, event) {
     const clientIP = request.headers.get("CF-Connecting-IP");
     const redirectionioRequest = create_redirectionio_request(request, libredirectionio, clientIP);
     const [action, registerCachePromise] = await get_action(request, redirectionioRequest, options, libredirectionio);
-    const response = await proxy(request, redirectionioRequest, action, options, libredirectionio);
+    const [response, backendStatusCode] = await proxy(request, redirectionioRequest, action, options, libredirectionio);
 
     event.waitUntil(async function () {
         if (registerCachePromise !== null) {
             await registerCachePromise;
         }
 
-        await log(response, redirectionioRequest, action, libredirectionio, options, clientIP || "");
+        await log(response, backendStatusCode, redirectionioRequest, action, libredirectionio, options, clientIP || "");
     }());
 
     return response;
@@ -133,7 +133,8 @@ async function proxy(request, redirectionioRequest, action, options, libredirect
             });
         }
 
-        const statusCodeAfterResponse = action.get_status_code(response.status);
+        const backendStatusCode = response.status;
+        const statusCodeAfterResponse = action.get_status_code(backendStatusCode);
 
         if (statusCodeAfterResponse !== 0) {
             response.status = Number(statusCodeAfterResponse);
@@ -145,7 +146,7 @@ async function proxy(request, redirectionioRequest, action, options, libredirect
             headerMap.add_header(pair[0], pair[1]);
         }
 
-        const newHeaderMap = action.filter_headers(headerMap, response.status, options.add_rule_ids_header);
+        const newHeaderMap = action.filter_headers(headerMap, backendStatusCode, options.add_rule_ids_header);
         const newHeaders = new Headers();
 
         for (let i = 0; i < newHeaderMap.len(); i++) {
@@ -158,7 +159,7 @@ async function proxy(request, redirectionioRequest, action, options, libredirect
             headers: newHeaders,
         });
 
-        const bodyFilter = action.create_body_filter(response.status);
+        const bodyFilter = action.create_body_filter(backendStatusCode);
 
         // Skip body filtering
         if (bodyFilter.is_null()) {
@@ -169,11 +170,12 @@ async function proxy(request, redirectionioRequest, action, options, libredirect
 
         filter_body(response.body, writable, bodyFilter);
 
-        return new Response(readable, response);
+        return [new Response(readable, response), backendStatusCode];
     } catch (err) {
         console.error(err);
+        const response = await fetch(request);
 
-        return await fetch(request);
+        return [response, response.status];
     }
 }
 
@@ -201,7 +203,7 @@ async function filter_body(readable, writable, bodyFilter) {
     await writer.close();
 }
 
-async function log(response, redirectionioRequest, action, libredirectionio, options, clientIP) {
+async function log(response, backendStatusCode, redirectionioRequest, action, libredirectionio, options, clientIP) {
     if (response === null) {
         return;
     }
@@ -213,7 +215,7 @@ async function log(response, redirectionioRequest, action, libredirectionio, opt
         responseHeaderMap.add_header(pair[0], pair[1]);
     }
 
-    if (action && !action.should_log_request(response.status)) {
+    if (action && !action.should_log_request(backendStatusCode)) {
         return;
     }
 
