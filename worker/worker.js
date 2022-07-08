@@ -58,7 +58,9 @@ function create_redirectionio_request(request, libredirectionio, clientIp) {
         redirectionioRequest.add_header(pair[0], pair[1]);
     }
 
-    redirectionioRequest.set_remote_ip(clientIp);
+    if (clientIp) {
+        redirectionioRequest.set_remote_ip(clientIp);
+    }
 
     return redirectionioRequest;
 }
@@ -163,7 +165,7 @@ async function proxy(request, redirectionioRequest, action, options, libredirect
 
         // Skip body filtering
         if (bodyFilter.is_null()) {
-            return response;
+            return [response, response.status];
         }
 
         const { readable, writable } = new TransformStream();
