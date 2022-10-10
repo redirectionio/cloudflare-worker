@@ -37,6 +37,79 @@ async function redirectionio_fetch(request, event) {
     return response;
 }
 
+function split_set_cookies(cookiesString) {
+    if (Array.isArray(cookiesString)) {
+        return cookiesString;
+    }
+    if (typeof cookiesString !== "string") {
+        return [];
+    }
+
+    var cookiesStrings = [];
+    var pos = 0;
+    var start;
+    var ch;
+    var lastComma;
+    var nextStart;
+    var cookiesSeparatorFound;
+
+    function skipWhitespace() {
+        while (pos < cookiesString.length && /\s/.test(cookiesString.charAt(pos))) {
+            pos += 1;
+        }
+        return pos < cookiesString.length;
+    }
+
+    function notSpecialChar() {
+        ch = cookiesString.charAt(pos);
+
+        return ch !== "=" && ch !== ";" && ch !== ",";
+    }
+
+    while (pos < cookiesString.length) {
+        start = pos;
+        cookiesSeparatorFound = false;
+
+        while (skipWhitespace()) {
+            ch = cookiesString.charAt(pos);
+            if (ch === ",") {
+                // ',' is a cookie separator if we have later first '=', not ';' or ','
+                lastComma = pos;
+                pos += 1;
+
+                skipWhitespace();
+                nextStart = pos;
+
+                while (pos < cookiesString.length && notSpecialChar()) {
+                    pos += 1;
+                }
+
+                // currently special character
+                if (pos < cookiesString.length && cookiesString.charAt(pos) === "=") {
+                    // we found cookies separator
+                    cookiesSeparatorFound = true;
+                    // pos is inside the next cookie, so back up and return it.
+                    pos = nextStart;
+                    cookiesStrings.push(cookiesString.substring(start, lastComma));
+                    start = pos;
+                } else {
+                    // in param ',' or param separator ';',
+                    // we continue from that comma
+                    pos = lastComma + 1;
+                }
+            } else {
+                pos += 1;
+            }
+        }
+
+        if (!cookiesSeparatorFound || pos >= cookiesString.length) {
+            cookiesStrings.push(cookiesString.substring(start, cookiesString.length));
+        }
+    }
+
+    return cookiesStrings;
+}
+
 function create_redirectionio_request(request, libredirectionio, clientIp) {
     const urlObject = new URL(request.url);
     const redirectionioRequest = new libredirectionio.Request(urlObject.pathname + urlObject.search, urlObject.host, urlObject.protocol.includes('https') ? 'https' : 'http', request.method);
@@ -145,7 +218,15 @@ async function proxy(request, redirectionioRequest, action, options, libredirect
         const headerMap = new libredirectionio.HeaderMap();
 
         for (const pair of response.headers.entries()) {
-            headerMap.add_header(pair[0], pair[1]);
+            if (pair[0] === "set-cookie") {
+                const cookies = split_set_cookies(pair[1]);
+
+                for (const cookie of cookies) {
+                    headerMap.add_header("set-cookie", cookie);
+                }
+            } else {
+                headerMap.add_header(pair[0], pair[1]);
+            }
         }
 
         const newHeaderMap = action.filter_headers(headerMap, backendStatusCode, options.add_rule_ids_header);
