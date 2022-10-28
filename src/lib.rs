@@ -94,6 +94,10 @@ impl HeaderMap {
         self.headers.push(Header { name, value })
     }
 
+    pub fn remove_header(&mut self, name: String) {
+        self.headers.retain(|header| header.name != name)
+    }
+
     pub fn len(&self) -> usize {
         self.headers.len()
     }
@@ -168,13 +172,17 @@ impl Action {
         }
     }
 
-    pub fn create_body_filter(&mut self, response_status_code: u16) -> BodyFilter {
+    pub fn create_body_filter(
+        &mut self,
+        response_status_code: u16,
+        headers: &HeaderMap,
+    ) -> BodyFilter {
         if self.action.is_none() {
             return BodyFilter { filter: None };
         }
 
         let action = self.action.as_mut().unwrap();
-        let filter = action.create_filter_body(response_status_code);
+        let filter = action.create_filter_body(response_status_code, &headers.headers);
 
         BodyFilter { filter }
     }
@@ -197,34 +205,23 @@ impl BodyFilter {
     }
 
     pub fn filter(&mut self, data: Vec<u8>) -> Vec<u8> {
-        if self.filter.is_none() {
-            return data;
+        match self.filter.as_mut() {
+            None => data,
+            Some(filter) => filter.filter(data),
         }
-
-        let filter = self.filter.as_mut().unwrap();
-
-        let body = match String::from_utf8(data) {
-            Err(error) => return error.into_bytes(),
-            Ok(body) => body,
-        };
-
-        let new_body = filter.filter(body);
-
-        new_body.into_bytes()
     }
 
     pub fn end(&mut self) -> Vec<u8> {
-        if self.filter.is_none() {
-            return Vec::new();
+        match self.filter.as_mut() {
+            None => Vec::new(),
+            Some(filter) => filter.end(),
         }
-
-        let filter = self.filter.as_mut().unwrap();
-        let end = filter.end();
-
-        self.filter = None;
-
-        end.into_bytes()
     }
+}
+
+#[wasm_bindgen()]
+pub fn init_log() {
+    wasm_logger::init(wasm_logger::Config::default());
 }
 
 #[wasm_bindgen()]

@@ -6,7 +6,7 @@ addEventListener('fetch', event => {
 
 async function redirectionio_fetch(request, event) {
     const options = {
-        token: REDIRECTIONIO_TOKEN || null,
+        token: REDIRECTIONIO_TOKEN || '9df52b00-03b9-4856-80fd-64ebc14819e7:8ea8f24c-c005-4a5c-8447-15e43f8f2d51',
         timeout: parseInt(REDIRECTIONIO_TIMEOUT, 10),
         add_rule_ids_header: REDIRECTIONIO_ADD_HEADER_RULE_IDS === 'true',
         version: REDIRECTIONIO_VERSION || 'redirection-io-cloudflare/dev',
@@ -20,6 +20,8 @@ async function redirectionio_fetch(request, event) {
 
     const libredirectionio = wasm_bindgen;
     await wasm_bindgen(wasm);
+
+    libredirectionio.init_log();
 
     const clientIP = request.headers.get("CF-Connecting-IP");
     const redirectionioRequest = create_redirectionio_request(request, libredirectionio, clientIP);
@@ -242,7 +244,8 @@ async function proxy(request, redirectionioRequest, action, options, libredirect
             headers: newHeaders,
         });
 
-        const bodyFilter = action.create_body_filter(backendStatusCode);
+        newHeaderMap.remove_header("content-encoding");
+        const bodyFilter = action.create_body_filter(backendStatusCode, newHeaderMap);
 
         // Skip body filtering
         if (bodyFilter.is_null()) {
