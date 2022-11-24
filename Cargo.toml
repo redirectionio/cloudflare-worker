@@ -11,7 +11,7 @@ debug = 1
 [dependencies]
 chrono = { version = "0.4.19", features = ["serde", "wasmbind"] }
 log = "0.4.14"
-redirectionio = "2.5.1"
+redirectionio = "^2.5.2"
 # Uncomment the following line to debug
 #redirectionio = { path = "../../agent/libredirectionio/" }
 serde = { version = "1.0", features = ["derive"] }
