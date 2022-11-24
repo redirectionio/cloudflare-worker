@@ -147,7 +147,7 @@ impl Action {
 
     pub fn get_status_code(&mut self, response_status_code: u16) -> u16 {
         if let Some(action) = self.action.as_mut() {
-            return action.get_status_code(response_status_code);
+            return action.get_status_code(response_status_code, None);
         }
 
         0
@@ -164,8 +164,12 @@ impl Action {
         }
 
         let action = self.action.as_mut().unwrap();
-        let new_headers =
-            action.filter_headers(headers.headers, response_status_code, add_rule_ids_header);
+        let new_headers = action.filter_headers(
+            headers.headers,
+            response_status_code,
+            add_rule_ids_header,
+            None,
+        );
 
         HeaderMap {
             headers: new_headers,
@@ -207,14 +211,14 @@ impl BodyFilter {
     pub fn filter(&mut self, data: Vec<u8>) -> Vec<u8> {
         match self.filter.as_mut() {
             None => data,
-            Some(filter) => filter.filter(data),
+            Some(filter) => filter.filter(data, None),
         }
     }
 
     pub fn end(&mut self) -> Vec<u8> {
         match self.filter.as_mut() {
             None => Vec::new(),
-            Some(filter) => filter.end(),
+            Some(filter) => filter.end(None),
         }
     }
 }
