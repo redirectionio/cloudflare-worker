@@ -6,8 +6,8 @@ Look at our documentation about cloudflare integration here : [https://redirecti
 
 You can also directly push this repository to a cloudflare worker, but you will still need a redirection io account to do so:
 
-1. You need to have wrangler installed: `cargo install wrangler`
-2. Login or configure your api token for cloudflare `wrangler login` or `wrangler config`
+1. You need to have wrangler installed: `npm install -g wrangler`
+2. Login or configure your api token for cloudflare `wrangler login`
 3. Copy file `wrangler.toml.dist` to `wrangler.toml` and replace needed value
 4. Push your redirection io token as a secret value `wrangler secret put REDIRECTIONIO_TOKEN` and enter you redirection io project key when asked (available in your the instance panel of your project)
 5. Publish your worker: `wrangler publish`
