@@ -21,7 +21,7 @@ pub async fn get_action(
     let mut hasher = DefaultHasher::new();
     request.hash(&mut hasher);
 
-    let cache_key = format!("redirectionio:{}", hasher.finish());
+    let cache_key = format!("https://agent.redirection.io/{}/action/{}", token, hasher.finish());
 
     match cache.get(&cache_key, true).await? {
         Some(mut response) => Ok((response.json::<Action>().await?, None)),

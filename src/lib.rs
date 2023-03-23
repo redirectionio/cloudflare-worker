@@ -11,23 +11,23 @@ pub async fn main(req: Request, env: Env, ctx: Context) -> Result<Response> {
     ctx.pass_through_on_exception();
 
     let token = env.secret("REDIRECTIONIO_TOKEN")?.to_string();
-    let timeout = match env.secret("REDIRECTIONIO_TIMEOUT") {
+    let timeout = match env.var("REDIRECTIONIO_TIMEOUT") {
         Ok(timeout) => timeout.to_string().parse::<u64>().unwrap_or(5000),
         Err(_) => 5000,
     };
-    let add_headers = match env.secret("REDIRECTIONIO_ADD_HEADER_RULE_IDS") {
+    let add_headers = match env.var("REDIRECTIONIO_ADD_HEADER_RULE_IDS") {
         Ok(add_headers) => add_headers.to_string() == "true",
         Err(_) => false,
     };
     let version = env
-        .secret("REDIRECTIONIO_VERSION")
+        .var("REDIRECTIONIO_VERSION")
         .map(|v| v.to_string())
         .unwrap_or_else(|_| "redirection-io-cloudflare/dev".to_string());
     let instance_name = env
-        .secret("REDIRECTIONIO_INSTANCE_NAME")
+        .var("REDIRECTIONIO_INSTANCE_NAME")
         .map(|v| v.to_string())
         .unwrap_or_else(|_| "undefined".to_string());
-    let cache_time = match env.secret("REDIRECTIONIO_CACHE_TIME") {
+    let cache_time = match env.var("REDIRECTIONIO_CACHE_TIME") {
         Ok(timeout) => timeout.to_string().parse::<u64>().unwrap_or(0),
         Err(_) => 0,
     };
