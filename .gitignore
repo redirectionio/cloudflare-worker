@@ -1,3 +1,4 @@
+dist/
 target/
 wrangler.toml
 worker/generated
