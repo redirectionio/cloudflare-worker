@@ -18,4 +18,4 @@ getrandom = { version = "0.2.8", features = ["js"] }
 
 [profile.release]
 lto = true
-opt-level = "s"
+opt-level = 3
