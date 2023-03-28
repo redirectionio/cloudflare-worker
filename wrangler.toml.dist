@@ -2,7 +2,7 @@
 
 account_id = "account_id"
 name = "worker_name_on_cloudflare"
-route = "{ pattern = "*example.com/*", zone_id = "abcdef0123456789abcdef0123456789" }"
+route = { pattern = "*example.com/*", zone_id = "abcdef0123456789abcdef0123456789" }
 workers_dev = false
 compatibility_date = "2022-01-20"
 main = "build/worker/shim.mjs"
