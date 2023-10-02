@@ -1,3 +1,7 @@
+## 2.7.0
+
+ * Update to libredirectionio 2.9.0
+
 ## 2.6.0
 
  * Rewrite worker to use wrangler 2
