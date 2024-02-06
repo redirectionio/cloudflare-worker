@@ -1,3 +1,7 @@
+## 2.8.0
+
+* Update to libredirectionio 2.10.0
+
 ## 2.7.0
 
  * Update to libredirectionio 2.9.0
