@@ -32,7 +32,7 @@ pub async fn main(req: Request, env: Env, ctx: Context) -> Result<Response> {
         Err(_) => 0,
     };
 
-    let start_time = chrono::Utc::now().timestamp() as u64;
+    let start_time = chrono::Utc::now().timestamp() as u128;
     let (request, client_ip) = request::create_redirectionio_request(&req)?;
     let (mut action, cache_future) = action::get_action(&request, &token, &instance_name, &version, cache_time, timeout).await?;
     let (response, filtered_headers, backend_status_code) = proxy::proxy(req, &mut action, add_headers).await?;
