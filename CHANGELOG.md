@@ -1,3 +1,7 @@
+## 2.9.0
+
+* Update to libredirectionio 2.11.0: This fix a critical bug where the worker would crash
+
 ## 2.8.0
 
 * Update to libredirectionio 2.10.0
