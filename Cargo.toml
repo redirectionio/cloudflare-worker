@@ -1,6 +1,6 @@
 [package]
 name = "redirectionio-cloudflare-worker"
-version = "2.8.0"
+version = "2.9.0"
 authors = ["hello@redirection.io"]
 edition = "2018"
 
