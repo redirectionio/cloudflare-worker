@@ -4,3 +4,4 @@ target/
 wrangler.toml
 worker/generated
 Cargo.lock
+node_modules
