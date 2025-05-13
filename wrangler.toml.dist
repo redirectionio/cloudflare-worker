@@ -15,7 +15,7 @@ REDIRECTIONIO_VERSION = "redirection-io-cloudflare/dev"
 REDIRECTIONIO_CACHE_TIME = 0
 
 [build]
-command = "cargo install -q worker-build && worker-build --release"
+command = "cargo install -q worker-build && RUSTFLAGS='--cfg getrandom_backend=\"wasm_js\"' worker-build --release"
 
 [[rules]]
 globs = ["**/*.wasm"]
