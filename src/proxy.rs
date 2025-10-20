@@ -41,7 +41,7 @@ pub async fn proxy(worker_request: WorkerRequest, action: &mut Action, add_rules
 
     response = response.with_headers(response_headers);
 
-    match action.create_filter_body(backend_status_code, &filtered_headers) {
+    match action.create_filter_body(backend_status_code, &filtered_headers, None) {
         None => Ok((response, filtered_headers, backend_status_code)),
         Some(mut filter_body) => {
             // @TODO Use a stream body

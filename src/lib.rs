@@ -35,7 +35,9 @@ pub async fn main(req: Request, env: Env, ctx: Context) -> Result<Response> {
     let start_time = chrono::Utc::now().timestamp_millis() as u128;
     let (request, client_ip) = request::create_redirectionio_request(&req)?;
     let (mut action, cache_future) = action::get_action(&request, &token, &instance_name, &version, cache_time, timeout).await?;
+    let action_match_time = chrono::Utc::now().timestamp_millis() as u128;
     let (response, filtered_headers, backend_status_code) = proxy::proxy(req, &mut action, add_headers).await?;
+    let response_time = chrono::Utc::now().timestamp_millis() as u128;
 
     let log_request = if action.should_log_request(true, backend_status_code, None) {
         let log = Log::from_proxy(
@@ -45,8 +47,9 @@ pub async fn main(req: Request, env: Env, ctx: Context) -> Result<Response> {
             Some(&action),
             format!("cloudflare-worker/{}", version).as_str(),
             start_time,
+            action_match_time,
+            Some(response_time),
             client_ip.unwrap_or_default().as_str(),
-            None,
         );
 
         Some(log)
