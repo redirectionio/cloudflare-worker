@@ -27,6 +27,10 @@ pub async fn main(req: Request, env: Env, ctx: Context) -> Result<Response> {
         .var("REDIRECTIONIO_INSTANCE_NAME")
         .map(|v| v.to_string())
         .unwrap_or_else(|_| "undefined".to_string());
+    let agent_host = env
+        .var("REDIRECTIONIO_AGENT_HOST")
+        .map(|v| v.to_string())
+        .unwrap_or_else(|_| "https://agent.redirection.io".to_string());
     let cache_time = match env.var("REDIRECTIONIO_CACHE_TIME") {
         Ok(timeout) => timeout.to_string().parse::<u64>().unwrap_or(0),
         Err(_) => 0,
@@ -34,7 +38,8 @@ pub async fn main(req: Request, env: Env, ctx: Context) -> Result<Response> {
 
     let start_time = chrono::Utc::now().timestamp_millis() as u128;
     let (request, client_ip) = request::create_redirectionio_request(&req)?;
-    let (mut action, cache_future) = action::get_action(&request, &token, &instance_name, &version, cache_time, timeout).await?;
+    let (mut action, cache_future) =
+        action::get_action(&request, agent_host.as_str(), &token, &instance_name, &version, cache_time, timeout).await?;
     let action_match_time = chrono::Utc::now().timestamp_millis() as u128;
     let (response, filtered_headers, backend_status_code) = proxy::proxy(req, &mut action, add_headers).await?;
     let response_time = chrono::Utc::now().timestamp_millis() as u128;
@@ -44,7 +49,7 @@ pub async fn main(req: Request, env: Env, ctx: Context) -> Result<Response> {
             &request,
             response.status_code(),
             &filtered_headers,
-            Some(&action),
+            action.get_applied_rule_ids_vec(),
             format!("cloudflare-worker/{}", version).as_str(),
             start_time,
             action_match_time,
@@ -81,7 +86,7 @@ pub async fn main(req: Request, env: Env, ctx: Context) -> Result<Response> {
                     request_init.with_method(Method::Post).with_headers(headers).with_body(Some(body));
 
                     let log_request =
-                        Request::new_with_init(format!("https://agent.redirection.io/{}/log", token).as_str(), &request_init).unwrap();
+                        Request::new_with_init(format!("{}/{}/log", agent_host.as_str(), token).as_str(), &request_init).unwrap();
 
                     Fetch::Request(log_request).send().await.unwrap();
                 }

@@ -1,0 +1,32 @@
+# see documentation at https://redirection.io/documentation/developer-documentation/cloudflare-workers-integration#manually-deploying-the-cloudflare-worker
+
+account_id = "account_id"
+name = "worker_name_on_cloudflare"
+route = { pattern = "*example.com/*", zone_id = "abcdef0123456789abcdef0123456789" }
+workers_dev = false
+compatibility_date = "2022-01-20"
+main = "build/worker/shim.mjs"
+
+[vars]
+REDIRECTIONIO_ADD_HEADER_RULE_IDS = "true"
+REDIRECTIONIO_INSTANCE_NAME = "instance_name_on_redirectionio"
+REDIRECTIONIO_TIMEOUT = 100
+REDIRECTIONIO_VERSION = "redirection-io-cloudflare/dev"
+REDIRECTIONIO_CACHE_TIME = 0
+REDIRECTIONIO_TOKEN = "redirection_io_project_key"
+REDIRECTIONIO_AGENT_HOST = "http://127.0.0.1:11302"
+
+[build]
+command = "cargo install -q worker-build && RUSTFLAGS='--cfg getrandom_backend=\"wasm_js\"' worker-build --release"
+
+[dev]
+ip = "0.0.0.0"
+port = 28080
+local_protocol = "http"
+upstream_protocol = "http"
+host = "127.0.0.1:11080"
+
+[[rules]]
+globs = ["**/*.wasm"]
+type = "CompiledWasm"
+fallthrough = true

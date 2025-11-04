@@ -11,6 +11,7 @@ use worker::{AbortController, Cache, Delay, Fetch, Headers, Method, Request as W
 
 pub async fn get_action(
     request: &Request,
+    agent_host: &str,
     token: &str,
     instance_name: &str,
     version: &str,
@@ -21,7 +22,7 @@ pub async fn get_action(
     let mut hasher = DefaultHasher::new();
     request.hash(&mut hasher);
 
-    let cache_key = format!("https://agent.redirection.io/{}/action/{}", token, hasher.finish());
+    let cache_key = format!("{}/{}/action/{}", agent_host, token, hasher.finish());
 
     match cache.get(&cache_key, true).await? {
         Some(mut response) => Ok((response.json::<Action>().await?, None)),
@@ -37,8 +38,7 @@ pub async fn get_action(
 
             request_init.with_method(Method::Post).with_headers(headers).with_body(Some(body));
 
-            let action_request =
-                WorkerRequest::new_with_init(format!("https://agent.redirection.io/{}/action", token).as_str(), &request_init)?;
+            let action_request = WorkerRequest::new_with_init(format!("{}/{}/action", agent_host, token).as_str(), &request_init)?;
 
             let controller = AbortController::default();
             let signal = controller.signal();

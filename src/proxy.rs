@@ -5,7 +5,25 @@ use worker::{Fetch, Headers, Request as WorkerRequest, Response, ResponseBody, R
 pub async fn proxy(worker_request: WorkerRequest, action: &mut Action, add_rules_id_header: bool) -> Result<(Response, Vec<Header>, u16)> {
     let mut response = match action.get_status_code(0, None) {
         0 => Fetch::Request(worker_request).send().await?,
-        status_code => Response::empty()?.with_status(status_code),
+        status_code => Response::from_html(format!(
+            "
+<html>
+<head><title>{}</title></head>
+<body bgcolor=\"white\">
+<center><h1>{}</h1></center>
+</body>
+</html>
+<!-- a padding to disable MSIE and Chrome friendly error page -->
+<!-- a padding to disable MSIE and Chrome friendly error page -->
+<!-- a padding to disable MSIE and Chrome friendly error page -->
+<!-- a padding to disable MSIE and Chrome friendly error page -->
+<!-- a padding to disable MSIE and Chrome friendly error page -->
+<!-- a padding to disable MSIE and Chrome friendly error page -->
+<!-- a padding to disable MSIE and Chrome friendly error page -->
+",
+            &status_code, &status_code
+        ))?
+        .with_status(status_code),
     };
 
     let backend_status_code = response.status_code();
@@ -44,7 +62,6 @@ pub async fn proxy(worker_request: WorkerRequest, action: &mut Action, add_rules
     match action.create_filter_body(backend_status_code, &filtered_headers, None) {
         None => Ok((response, filtered_headers, backend_status_code)),
         Some(mut filter_body) => {
-            // @TODO Use a stream body
             let body = response.bytes().await?;
             let mut filtered_body_data = filter_body.filter(body, None);
             filtered_body_data.extend_from_slice(filter_body.end(None).as_slice());
