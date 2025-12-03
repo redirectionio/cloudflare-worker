@@ -1,5 +1,4 @@
-use redirectionio::action::Action;
-use redirectionio::http::Header;
+use redirectionio::{action::Action, http::Header};
 use worker::{Fetch, Headers, Request as WorkerRequest, Response, ResponseBody, Result};
 
 pub async fn proxy(worker_request: WorkerRequest, action: &mut Action, add_rules_id_header: bool) -> Result<(Response, Vec<Header>, u16)> {
@@ -51,7 +50,7 @@ pub async fn proxy(worker_request: WorkerRequest, action: &mut Action, add_rules
     }
 
     let filtered_headers = action.filter_headers(headers, backend_status_code, add_rules_id_header, None);
-    let mut response_headers = Headers::new();
+    let response_headers = Headers::new();
 
     for header in &filtered_headers {
         response_headers.append(header.name.as_str(), header.value.as_str())?;

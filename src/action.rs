@@ -1,13 +1,16 @@
+use std::{
+    collections::hash_map::DefaultHasher,
+    future::Future,
+    hash::{Hash, Hasher},
+    pin::Pin,
+    time::Duration,
+};
+
 use futures_util::future::Either;
-use redirectionio::action::Action;
-use redirectionio::http::Request;
-use std::collections::hash_map::DefaultHasher;
-use std::future::Future;
-use std::hash::{Hash, Hasher};
-use std::pin::Pin;
-use std::time::Duration;
-use worker::wasm_bindgen::JsValue;
-use worker::{AbortController, Cache, Delay, Fetch, Headers, Method, Request as WorkerRequest, RequestInit, Response, Result};
+use redirectionio::{action::Action, http::Request};
+use worker::{
+    wasm_bindgen::JsValue, AbortController, Cache, Delay, Fetch, Headers, Method, Request as WorkerRequest, RequestInit, Response, Result,
+};
 
 pub async fn get_action(
     request: &Request,
@@ -27,7 +30,7 @@ pub async fn get_action(
     match cache.get(&cache_key, true).await? {
         Some(mut response) => Ok((response.json::<Action>().await?, None)),
         None => {
-            let mut headers = Headers::new();
+            let headers = Headers::new();
             headers.set("Content-Type", "application/json")?;
             headers.set("x-redirectionio-instance-name", instance_name)?;
             headers.set("User-Agent", format!("cloudflare-worker/{}", version).as_str())?;

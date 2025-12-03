@@ -3,8 +3,7 @@ mod proxy;
 mod request;
 
 use redirectionio::api::Log;
-use worker::wasm_bindgen::JsValue;
-use worker::{console_log, event, Context, Env, Fetch, Headers, Method, Request, RequestInit, Response, Result};
+use worker::{console_log, event, wasm_bindgen::JsValue, Context, Env, Fetch, Headers, Method, Request, RequestInit, Response, Result};
 
 #[event(fetch)]
 pub async fn main(req: Request, env: Env, ctx: Context) -> Result<Response> {
@@ -70,27 +69,23 @@ pub async fn main(req: Request, env: Env, ctx: Context) -> Result<Response> {
         }
 
         if let Some(log) = log_request {
-            let mut headers = Headers::new();
+            let headers = Headers::new();
             headers.set("Content-Type", "application/json").unwrap();
             headers.set("x-redirectionio-instance-name", instance_name.as_str()).unwrap();
             headers
                 .set("User-Agent", format!("cloudflare-worker/{}", version).as_str())
                 .unwrap();
 
-            match serde_json::to_string(&log) {
-                Ok(log_json) => {
-                    let body = JsValue::from_str(&log_json);
+            if let Ok(log_json) = serde_json::to_string(&log) {
+                let body = JsValue::from_str(&log_json);
 
-                    let mut request_init = RequestInit::new();
+                let mut request_init = RequestInit::new();
 
-                    request_init.with_method(Method::Post).with_headers(headers).with_body(Some(body));
+                request_init.with_method(Method::Post).with_headers(headers).with_body(Some(body));
 
-                    let log_request =
-                        Request::new_with_init(format!("{}/{}/log", agent_host.as_str(), token).as_str(), &request_init).unwrap();
+                let log_request = Request::new_with_init(format!("{}/{}/log", agent_host.as_str(), token).as_str(), &request_init).unwrap();
 
-                    Fetch::Request(log_request).send().await.unwrap();
-                }
-                Err(_) => (),
+                Fetch::Request(log_request).send().await.unwrap();
             }
         }
     });
