@@ -9,7 +9,7 @@ use std::{
 use futures_util::future::Either;
 use redirectionio::{action::Action, http::Request};
 use worker::{
-    wasm_bindgen::JsValue, AbortController, Cache, Delay, Fetch, Headers, Method, Request as WorkerRequest, RequestInit, Response, Result,
+    AbortController, Cache, Delay, Fetch, Headers, Method, Request as WorkerRequest, RequestInit, Response, Result, wasm_bindgen::JsValue,
 };
 
 pub async fn get_action(

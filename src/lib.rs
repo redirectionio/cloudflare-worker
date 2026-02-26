@@ -3,7 +3,7 @@ mod proxy;
 mod request;
 
 use redirectionio::api::Log;
-use worker::{console_log, event, wasm_bindgen::JsValue, Context, Env, Fetch, Headers, Method, Request, RequestInit, Response, Result};
+use worker::{Context, Env, Fetch, Headers, Method, Request, RequestInit, Response, Result, console_log, event, wasm_bindgen::JsValue};
 
 #[event(fetch)]
 pub async fn main(req: Request, env: Env, ctx: Context) -> Result<Response> {
@@ -62,10 +62,10 @@ pub async fn main(req: Request, env: Env, ctx: Context) -> Result<Response> {
     };
 
     ctx.wait_until(async move {
-        if let Some(cache_future) = cache_future {
-            if let Err(err) = cache_future.await {
-                console_log!("error while caching action: {}", err);
-            }
+        if let Some(cache_future) = cache_future
+            && let Err(err) = cache_future.await
+        {
+            console_log!("error while caching action: {}", err);
         }
 
         if let Some(log) = log_request {

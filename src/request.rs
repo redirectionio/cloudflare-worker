@@ -23,10 +23,10 @@ pub fn create_redirectionio_request(worker_request: &WorkerRequest) -> Result<(R
         sampling_override: None,
     };
 
-    if let Some(remote_addr) = &client_ip {
-        if let Ok(ip) = remote_addr.parse::<std::net::IpAddr>() {
-            request.remote_addr = Some(ip);
-        }
+    if let Some(remote_addr) = &client_ip
+        && let Ok(ip) = remote_addr.parse::<std::net::IpAddr>()
+    {
+        request.remote_addr = Some(ip);
     }
 
     for (name, value) in worker_request.headers() {
