@@ -20,3 +20,5 @@ getrandom = { version = "0.3.4", features = ["wasm_js"] }
 [profile.release]
 lto = true
 opt-level = 3
+strip = true
+codegen-units = 1
