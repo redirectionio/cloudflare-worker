@@ -11,11 +11,9 @@ crate-type = ["cdylib", "rlib"]
 [dependencies]
 chrono = { version = "0.4.44", features = ["serde", "wasmbind"] }
 futures-util = { version = "0.3.32", default-features = false }
-redirectionio = { version = "=3.0.0", default-features = false }
-serde = { version = "1.0", features = ["derive"] }
+redirectionio = { version = "=3.1.0", default-features = false }
 serde_json = "1.0.149"
 worker = "0.7.5"
-getrandom = { version = "0.3.4", features = ["wasm_js"] }
 
 [profile.release]
 lto = true
