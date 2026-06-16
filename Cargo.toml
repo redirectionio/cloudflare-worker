@@ -18,5 +18,5 @@ worker = "0.8.0"
 [profile.release]
 lto = true
 opt-level = 3
-strip = true
+strip = false
 codegen-units = 1

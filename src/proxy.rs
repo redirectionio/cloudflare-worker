@@ -49,6 +49,11 @@ pub async fn proxy(worker_request: WorkerRequest, action: &mut Action, add_rules
         }
     }
 
+    // Create the body filter from the original backend response headers, before
+    // header filtering mutates them, so body filters (e.g. html_to_markdown)
+    // evaluate the original content type.
+    let body_filter = action.create_filter_body(backend_status_code, &headers, None);
+
     let filtered_headers = action.filter_headers(headers, backend_status_code, add_rules_id_header, None);
     let response_headers = Headers::new();
 
@@ -58,7 +63,7 @@ pub async fn proxy(worker_request: WorkerRequest, action: &mut Action, add_rules
 
     response = response.with_headers(response_headers);
 
-    match action.create_filter_body(backend_status_code, &filtered_headers, None) {
+    match body_filter {
         None => Ok((response, filtered_headers, backend_status_code)),
         Some(mut filter_body) => {
             let body = response.bytes().await?;
