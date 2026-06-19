@@ -5,6 +5,14 @@ mod request;
 use redirectionio::api::Log;
 use worker::{Context, Env, Fetch, Headers, Method, Request, RequestInit, Response, Result, console_log, event, wasm_bindgen::JsValue};
 
+/// What to report to the manager after a request: either a full log, or only the ids of
+/// the executed rules (when logging was disabled for the request by a "configuration"
+/// action), to count their executions without sending the full log.
+enum RequestReport {
+    Log(Box<Log>),
+    RuleCount(Vec<String>),
+}
+
 #[event(fetch)]
 pub async fn main(req: Request, env: Env, ctx: Context) -> Result<Response> {
     ctx.pass_through_on_exception();
@@ -43,7 +51,7 @@ pub async fn main(req: Request, env: Env, ctx: Context) -> Result<Response> {
     let (response, filtered_headers, backend_status_code) = proxy::proxy(req, &mut action, add_headers).await?;
     let response_time = chrono::Utc::now().timestamp_millis() as u128;
 
-    let log_request = if action.should_log_request(true, backend_status_code, None) {
+    let report = if action.should_log_request(true, backend_status_code, None) {
         let log = Log::from_proxy(
             &request,
             response.status_code(),
@@ -56,9 +64,17 @@ pub async fn main(req: Request, env: Env, ctx: Context) -> Result<Response> {
             client_ip.unwrap_or_default().as_str(),
         );
 
-        Some(log)
+        Some(RequestReport::Log(Box::new(log)))
     } else {
-        None
+        // Logging was disabled for this request by a "configuration" action: still count
+        // the executed rules, without sending the full request log.
+        let rule_ids = action.get_applied_rule_ids_vec();
+
+        if rule_ids.is_empty() {
+            None
+        } else {
+            Some(RequestReport::RuleCount(rule_ids))
+        }
     };
 
     ctx.wait_until(async move {
@@ -68,24 +84,30 @@ pub async fn main(req: Request, env: Env, ctx: Context) -> Result<Response> {
             console_log!("error while caching action: {}", err);
         }
 
-        if let Some(log) = log_request {
-            let headers = Headers::new();
-            headers.set("Content-Type", "application/json").unwrap();
-            headers.set("x-redirectionio-instance-name", instance_name.as_str()).unwrap();
-            headers
-                .set("User-Agent", format!("cloudflare-worker/{}", version).as_str())
-                .unwrap();
+        if let Some(report) = report {
+            let (path, body_json) = match report {
+                RequestReport::Log(log) => ("log", serde_json::to_string(&log)),
+                RequestReport::RuleCount(rule_ids) => ("rule-count", serde_json::to_string(&rule_ids)),
+            };
 
-            if let Ok(log_json) = serde_json::to_string(&log) {
-                let body = JsValue::from_str(&log_json);
+            if let Ok(body_json) = body_json {
+                let headers = Headers::new();
+                headers.set("Content-Type", "application/json").unwrap();
+                headers.set("x-redirectionio-instance-name", instance_name.as_str()).unwrap();
+                headers
+                    .set("User-Agent", format!("cloudflare-worker/{}", version).as_str())
+                    .unwrap();
+
+                let body = JsValue::from_str(&body_json);
 
                 let mut request_init = RequestInit::new();
 
                 request_init.with_method(Method::Post).with_headers(headers).with_body(Some(body));
 
-                let log_request = Request::new_with_init(format!("{}/{}/log", agent_host.as_str(), token).as_str(), &request_init).unwrap();
+                let report_request =
+                    Request::new_with_init(format!("{}/{}/{}", agent_host.as_str(), token, path).as_str(), &request_init).unwrap();
 
-                Fetch::Request(log_request).send().await.unwrap();
+                Fetch::Request(report_request).send().await.unwrap();
             }
         }
     });
