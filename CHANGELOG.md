@@ -1,3 +1,16 @@
+## 3.2.0 - 26-06-2026
+
+* Update libredirectionio to 3.2.0
+* Fix capture backend response headers to pass them to body filters before redirection.io mutates them
+
+## 3.0.0
+
+* Update libredirectionio to 3.0.0
+
+## 2.9.2
+
+* Fix building the worker with last version of rust and new wasm target
+
 ## 2.9.1
 
 * Update to libredirectionio 2.11.2: Fix backend duration in logs
