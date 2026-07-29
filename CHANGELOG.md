@@ -1,3 +1,9 @@
+## 3.3.0 - 29-07-2026
+
+* Update libredirectionio to 3.3.0
+* Only send the rule-count report when the agent advertises protocol 1.1 or later
+* Do not append or prepend text to media and other binary content types
+
 ## 3.2.0 - 26-06-2026
 
 * Update libredirectionio to 3.2.0
