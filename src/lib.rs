@@ -65,9 +65,11 @@ pub async fn main(req: Request, env: Env, ctx: Context) -> Result<Response> {
         );
 
         Some(RequestReport::Log(Box::new(log)))
-    } else {
+    } else if action.agent_supports_rule_count() {
         // Logging was disabled for this request by a "configuration" action: still count
-        // the executed rules, without sending the full request log.
+        // the executed rules, without sending the full request log. Only when the agent
+        // understands the RULE_COUNT command (protocol >= 1.1), as advertised in the match
+        // response; an older agent has no "rule-count" endpoint and would just reject it.
         let rule_ids = action.get_applied_rule_ids_vec();
 
         if rule_ids.is_empty() {
@@ -75,6 +77,9 @@ pub async fn main(req: Request, env: Env, ctx: Context) -> Result<Response> {
         } else {
             Some(RequestReport::RuleCount(rule_ids))
         }
+    } else {
+        // Older agent without rule-count support: nothing to report for this request.
+        None
     };
 
     ctx.wait_until(async move {
