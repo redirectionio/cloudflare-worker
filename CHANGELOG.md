@@ -1,3 +1,9 @@
+## 3.4.0 - 05-10-2026
+
+* Update libredirectionio to 3.4.0
+* Apply the request header filters of the matched rules to the request forwarded to the backend
+* Send the tags of the "tag logs" rule action with the logs, the `response_header` variable is resolved from the backend response headers
+
 ## 3.3.0 - 29-07-2026
 
 * Update libredirectionio to 3.3.0
