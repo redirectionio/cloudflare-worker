@@ -3,6 +3,7 @@ use worker::{Fetch, Headers, Request as WorkerRequest, Response, ResponseBody, R
 
 pub async fn proxy(worker_request: WorkerRequest, action: &mut Action, add_rules_id_header: bool) -> Result<(Response, Vec<Header>, u16)> {
     let mut response = match action.get_status_code(0, None) {
+        0 if action.has_request_header_filters() => Fetch::Request(filter_request_headers(&worker_request, action)?).send().await?,
         0 => Fetch::Request(worker_request).send().await?,
         status_code => Response::from_html(format!(
             "
@@ -79,6 +80,23 @@ pub async fn proxy(worker_request: WorkerRequest, action: &mut Action, add_rules
             Ok((response_filtered, filtered_headers, backend_status_code))
         }
     }
+}
+
+fn filter_request_headers(worker_request: &WorkerRequest, action: &mut Action) -> Result<WorkerRequest> {
+    // the incoming request headers are immutable
+    let mut request = worker_request.clone_mut()?;
+    let headers = request.headers_mut()?;
+    let request_headers: Vec<Header> = headers.entries().map(|(name, value)| Header { name, value }).collect();
+
+    for name in request_headers.iter().map(|header| header.name.clone()).collect::<Vec<_>>() {
+        headers.delete(name.as_str())?;
+    }
+
+    for header in action.filter_request_headers(request_headers, None) {
+        headers.append(header.name.as_str(), header.value.as_str())?;
+    }
+
+    Ok(request)
 }
 
 fn split_set_cookie(set_cookie: &str) -> Vec<String> {

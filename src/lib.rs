@@ -62,7 +62,8 @@ pub async fn main(req: Request, env: Env, ctx: Context) -> Result<Response> {
             action_match_time,
             Some(response_time),
             client_ip.unwrap_or_default().as_str(),
-        );
+        )
+        .with_tags(action.get_log_tags(backend_status_code, None));
 
         Some(RequestReport::Log(Box::new(log)))
     } else if action.agent_supports_rule_count() {
