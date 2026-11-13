@@ -17,7 +17,7 @@ REDIRECTIONIO_TOKEN = "redirection_io_project_key"
 REDIRECTIONIO_AGENT_HOST = "http://127.0.0.1:11302"
 
 [build]
-command = "cargo install -q worker-build && RUSTFLAGS='--cfg getrandom_backend=\"wasm_js\"' worker-build --release"
+command = "cargo install -q worker-build@0.8.7 && RUSTFLAGS='--cfg getrandom_backend=\"wasm_js\"' worker-build --release"
 
 [dev]
 ip = "0.0.0.0"
