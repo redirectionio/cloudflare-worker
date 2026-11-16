@@ -5,7 +5,7 @@ name = "worker_name_on_cloudflare"
 route = { pattern = "*example.com/*", zone_id = "abcdef0123456789abcdef0123456789" }
 workers_dev = false
 compatibility_date = "2022-01-20"
-main = "build/worker/shim.mjs"
+main = "build/index.js"
 
 [vars]
 REDIRECTIONIO_ADD_HEADER_RULE_IDS = "true"
@@ -17,7 +17,7 @@ REDIRECTIONIO_TOKEN = "redirection_io_project_key"
 REDIRECTIONIO_AGENT_HOST = "http://127.0.0.1:11302"
 
 [build]
-command = "cargo install -q worker-build@0.8.7 && RUSTFLAGS='--cfg getrandom_backend=\"wasm_js\"' worker-build --release"
+command = "cargo install -q worker-build@0.9.0 && RUSTFLAGS='--cfg getrandom_backend=\"wasm_js\"' worker-build --release"
 
 [dev]
 ip = "0.0.0.0"
